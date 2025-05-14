@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Topics</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/topics_select.js" defer></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom, #f5f7fa, #c3cfe2);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        h1 {
+            color: #3498db;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .subtitle {
+            color: #555;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .topics-form {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 2rem;
+        }
+        
+        .category-section {
+            margin-bottom: 2.5rem;
+        }
+        
+        h2 {
+            color: #3498db;
+            font-size: 1.4rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 1rem;
+        }
+        
+        .topic-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .topic-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.7rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .topic-item:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .topic-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #3498db;
+        }
+        
+        .topic-item label {
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        
+        .arxiv-label {
+            color: #e74c3c;
+            font-weight: 500;
+        }
+        
+        .books-label {
+            color: #9b59b6;
+            font-weight: 500;
+        }
+        
+        .submit-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: block;
+            margin: 2rem auto 0;
+            width: 200px;
+        }
+        
+        .submit-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Select Your Topics</h1>
+            <p class="subtitle">Choose the topics you're interested in to customize your feed</p>
+        </header>
+        
+        <form class="topics-form" method="post" action="/select-topics">
+            <div class="category-section">
+                <h2>arXiv Subcategories</h2>
+                <div class="topic-items">
+                    <div class="topic-item">
+                        <input type="checkbox" id="cs-lg" name="arxiv" value="cs.LG"> 
+                        <label for="cs-lg" class="arxiv-label">cs.LG - Machine Learning</label>
+                    </div>
+                    <div class="topic-item">
+                        <input type="checkbox" id="cs-ai" name="arxiv" value="cs.AI"> 
+                        <label for="cs-ai" class="arxiv-label">cs.AI - Artificial Intelligence</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="category-section">
+                <h2>Google Books Categories</h2>
+                <div class="topic-items">
+                    <div class="topic-item">
+                        <input type="checkbox" id="english" name="books" value="English Language"> 
+                        <label for="english" class="books-label">English Language</label>
+                    </div>
+                    <div class="topic-item">
+                        <input type="checkbox" id="ml" name="books" value="Machine Learning"> 
+                        <label for="ml" class="books-label">Machine Learning</label>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="submit-btn">Save Preferences</button>
+        </form>
+    </div>
+</body>
+</html>

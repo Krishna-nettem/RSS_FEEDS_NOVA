@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSS Feed</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>    <header>
+        <h1>NOVA Feeds</h1>
+        <nav>
+            <a href="/books">Books Feed</a>
+            <a href="/research">Research Feed</a>
+            <a href="/favourites">Favorites</a>
+            <a href="/select-books">Edit Book Categories</a>
+            <a href="/select-research">Edit Research Topics</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+      <div class="feed-controls">
+        <p class="last-update">Last updated: <span id="last-updated">{{ last_updated }}</span></p>
+        <button id="refresh-btn" class="refresh-btn" onclick="refreshFeeds()">
+            <span class="refresh-icon">↻</span> Refresh Feeds
+        </button>
+    </div>
+    
+    {% block content %}
+    <main>
+        <section class="feed-container">
+            {% if feed_items %}
+                {% for item in feed_items %}
+                <div class="feed-item {% if item.is_favorite %}favorite{% endif %}" data-id="{{ loop.index }}">
+                    <div class="feed-header">
+                        <span class="feed-type {{ item.type }}">{{ item.type|upper }}</span>
+                        <span class="feed-category">{{ item.category }}</span>
+                        <span class="feed-date">{{ item.published }}</span>
+                    </div>                    <h2 class="feed-title">
+                        <a href="{{ item.link }}" target="_blank" onclick="trackView('{{ item.link|escape }}', '{{ item.title|escape }}', '{{ item.type }}')">{{ item.title }}</a>
+                    </h2>
+                    <div class="feed-summary">{{ item.summary|safe }}</div>
+                    <div class="feed-actions">
+                        <button class="favorite-btn {% if item.is_favorite %}active{% endif %}" 
+                                onclick="toggleFavorite(this, '{{ item.title|escape }}', '{{ item.type }}', '{{ item.link|escape }}', '{{ item.published }}')">
+                            {% if item.is_favorite %}★ Favorited{% else %}☆ Add to Favorites{% endif %}
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-feeds">
+                    <h2>No RSS feed items found</h2>
+                    <p>Make sure you have selected at least one book category and one research topic.</p>
+                    <div class="feed-actions">
+                        <a href="/select-books" class="btn">Select Book Categories</a>
+                        <a href="/select-research" class="btn">Select Research Topics</a>
+                    </div>
+                </div>
+            {% endif %}
+        </section>
+        
+        <aside class="favorites">
+            <h2>Your Favorites</h2>
+            {% if favourites %}
+                <ul class="favorites-list">
+                {% for fav in favourites %}
+                    <li id="fav-{{ fav.id }}">
+                        <span class="fav-type {{ fav.type }}">{{ fav.type|upper }}</span>
+                        <a href="{{ fav.link }}" target="_blank">{{ fav.title }}</a>
+                        <span class="fav-date">{{ fav.date_published }}</span>
+                        <button onclick="removeFavorite('{{ fav.id }}')">Remove</button>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No favorites yet. Click the star icon on any feed item to add it to your favorites.</p>
+            {% endif %}
+        </aside>
+    </main>
+    {% endblock %}
+      <script>
+        function toggleFavorite(button, title, type, link, date) {
+            if (button.classList.contains('active')) {
+                // Find the favorite ID from the data attribute
+                const itemId = button.getAttribute('data-fav-id');
+                if (itemId) {
+                    removeFavorite(itemId);
+                }
+            } else {
+                // Add to favorites
+                const formData = new FormData();
+                formData.append('title', title);
+                formData.append('type', type);
+                formData.append('link', link);
+                formData.append('date_published', date);
+                
+                axios.post('/favourite', formData)
+                .then(function (response) {
+                    button.classList.add('active');
+                    button.innerHTML = '★ Favorited';
+                    button.setAttribute('data-fav-id', response.data.id);
+                    // Add to favorites list dynamically
+                    addToFavoritesList(response.data.id, title, type, link, date);
+                })
+                .catch(function (error) {
+                    console.error('Error adding favorite:', error);
+                });
+            }
+        }
+          function removeFavorite(favId) {
+            const formData = new FormData();
+            formData.append('fav_id', favId);
+            
+            axios.post('/unfavourite', formData)
+            .then(function (response) {
+                // Remove from UI
+                const favElement = document.getElementById('fav-' + favId);
+                if (favElement) {
+                    favElement.remove();
+                }
+                
+                // Remove from feed items if we're on the favorites page
+                const feedItem = document.querySelector(`.feed-item[data-id="${favId}"]`);
+                if (feedItem) {
+                    feedItem.remove();
+                    
+                    // If there are no more favorites, show the "no favorites" message
+                    const feedContainer = document.querySelector('.feed-container');
+                    if (feedContainer && !feedContainer.querySelector('.feed-item')) {
+                        const noFeedsDiv = document.createElement('div');
+                        noFeedsDiv.className = 'no-feeds';
+                        noFeedsDiv.innerHTML = `
+                            <h2>No favorites yet</h2>
+                            <p>Click the star icon on any feed item to add it to your favorites.</p>
+                        `;
+                        feedContainer.appendChild(noFeedsDiv);
+                    }
+                }
+                
+                // Update any matching feed items
+                const favButtons = document.querySelectorAll('.favorite-btn[data-fav-id="' + favId + '"]');
+                favButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.innerHTML = '☆ Add to Favorites';
+                    btn.removeAttribute('data-fav-id');
+                });
+            })
+            .catch(function (error) {
+                console.error('Error removing favorite:', error);
+            });
+        }
+        
+        function addToFavoritesList(id, title, type, link, date) {
+            const favoritesList = document.querySelector('.favorites-list');
+            const noFavoritesMsg = document.querySelector('.favorites p');
+            
+            if (noFavoritesMsg) {
+                noFavoritesMsg.remove();
+            }
+            
+            if (!favoritesList) {
+                // Create the list if it doesn't exist
+                const favoritesSection = document.querySelector('.favorites');
+                const newList = document.createElement('ul');
+                newList.className = 'favorites-list';
+                favoritesSection.appendChild(newList);
+                favoritesList = newList;
+            }
+            
+            // Create new list item
+            const li = document.createElement('li');
+            li.id = 'fav-' + id;
+            li.innerHTML = `
+                <span class="fav-type ${type}">${type.toUpperCase()}</span>
+                <a href="${link}" target="_blank">${title}</a>
+                <span class="fav-date">${date}</span>
+                <button onclick="removeFavorite('${id}')">Remove</button>
+            `;
+            
+            favoritesList.appendChild(li);
+        }
+        
+        function refreshFeeds() {
+            const refreshBtn = document.getElementById('refresh-btn');
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '<span class="refresh-icon spinning">↻</span> Refreshing...';
+            
+            axios.get('/api/refresh-feeds')
+            .then(function(response) {
+                // Update last updated timestamp
+                document.getElementById('last-updated').textContent = response.data.last_updated;
+                
+                // Replace feed items with new ones
+                const feedContainer = document.querySelector('.feed-container');
+                let newHtml = '';
+                
+                if (response.data.feed_items.length > 0) {
+                    response.data.feed_items.forEach((item, index) => {
+                        const isFavorite = item.is_favorite ? 'favorite' : '';
+                        const favBtnText = item.is_favorite ? '★ Favorited' : '☆ Add to Favorites';
+                        const favBtnClass = item.is_favorite ? 'favorite-btn active' : 'favorite-btn';
+                        const favIdAttr = item.is_favorite ? `data-fav-id="${item.favorite_id}"` : '';
+                        
+                        newHtml += `
+                            <div class="feed-item ${isFavorite}" data-id="${index + 1}">
+                                <div class="feed-header">
+                                    <span class="feed-type ${item.type}">${item.type.toUpperCase()}</span>
+                                    <span class="feed-category">${item.category}</span>
+                                    <span class="feed-date">${item.published}</span>
+                                </div>
+                                <h2 class="feed-title">
+                                    <a href="${item.link}" target="_blank">${item.title}</a>
+                                </h2>
+                                <div class="feed-summary">${item.summary || ''}</div>
+                                <div class="feed-actions">
+                                    <button class="${favBtnClass}" ${favIdAttr}
+                                            onclick="toggleFavorite(this, '${item.title.replace(/'/g, "\\'")}', '${item.type}', '${item.link.replace(/'/g, "\\'")}', '${item.published}')">
+                                        ${favBtnText}
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    newHtml = `
+                        <div class="no-feeds">
+                            <h2>No RSS feed items found</h2>
+                            <p>Make sure you have selected at least one book category and one research topic.</p>
+                            <div class="feed-actions">
+                                <a href="/select-books" class="btn">Select Book Categories</a>
+                                <a href="/select-research" class="btn">Select Research Topics</a>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                feedContainer.innerHTML = newHtml;
+                
+                // Re-enable refresh button
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '<span class="refresh-icon">↻</span> Refresh Feeds';
+                
+                // Show success message
+                const successMsg = document.createElement('div');
+                successMsg.className = 'refresh-success';
+                successMsg.textContent = 'Feeds refreshed successfully!';
+                document.body.appendChild(successMsg);
+                
+                // Remove message after 3 seconds
+                setTimeout(() => {
+                    successMsg.classList.add('fade-out');
+                    setTimeout(() => {
+                        successMsg.remove();
+                    }, 500);
+                }, 3000);
+            })
+            .catch(function(error) {
+                console.error('Error refreshing feeds:', error);
+                // Re-enable refresh button
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '<span class="refresh-icon">↻</span> Refresh Feeds';
+                
+                // Show error message
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'refresh-error';
+                errorMsg.textContent = 'Error refreshing feeds. Please try again.';
+                document.body.appendChild(errorMsg);
+                
+                // Remove message after 3 seconds
+                setTimeout(() => {
+                    errorMsg.classList.add('fade-out');
+                    setTimeout(() => {
+                        errorMsg.remove();
+                    }, 500);
+                }, 3000);
+            });
+        }
+        
+        function trackView(url, title, type) {
+            const formData = new FormData();
+            formData.append('url', url);
+            formData.append('title', title);
+            formData.append('type', type);
+            
+            // Send tracking data to server asynchronously, don't wait for response
+            axios.post('/track-view', formData)
+            .catch(function(error) {
+                console.error('Error tracking view:', error);
+            });
+            
+            // Don't block the navigation
+            return true;
+        }
+    </script>
+</body>
+</html>

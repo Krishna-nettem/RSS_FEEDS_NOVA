@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2ecc71;
+            --danger: #e74c3c;
+            --dark: #34495e;
+            --light: #ecf0f1;
+            --text: #2c3e50;
+            --border: #ddd;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: #f9f9f9;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), #2980b9);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        header h1 {
+            margin: 0;
+            font-weight: 500;
+        }
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            text-decoration: none;
+            transition: background 0.3s;
+            display: inline-flex;
+            align-items: center;
+            font-weight: 500;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            color: var(--dark);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-top: 0;
+            font-weight: 500;
+        }
+        
+        h3 {
+            color: var(--primary);
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 2em;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            border: 1px solid var(--border);
+            padding: 12px 15px;
+            text-align: left;
+        }
+        
+        th {
+            background: var(--primary);
+            color: white;
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+        
+        tbody tr:nth-child(even) {
+            background-color: rgba(0,0,0,0.02);
+        }
+        
+        tbody tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        
+        .badge-admin {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        button {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .link-button {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .link-button:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+        
+        .no-content {
+            background: rgba(0,0,0,0.03);
+            padding: 20px;
+            border-radius: 6px;
+            text-align: center;
+            color: #7f8c8d;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 10px;
+            }
+            
+            table {
+                font-size: 0.9em;
+            }
+            
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Admin Panel</h1>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="card">
+            <h2>All Users</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            {% if user.email != admin_email %}
+                            <form method="post" action="/admin/delete-user" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this user and all their data? This action cannot be undone.');">
+                                <input type="hidden" name="user_email" value="{{ user.email }}">
+                                <button type="submit" class="danger">Delete User</button>
+                            </form>
+                            {% else %}
+                            <span class="badge badge-admin">Admin</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card">
+            <h2>Favourites of All Users</h2>
+            {% for email, favs in favs_by_user.items() %}
+                <h3>{{ email }}</h3>
+                {% if favs %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Link</th>
+                            <th>Date Published</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fav in favs %}
+                        <tr>
+                            <td>{{ fav.title }}</td>
+                            <td>{{ fav.type }}</td>
+                            <td><a href="{{ fav.link }}" target="_blank" class="link-button">View</a></td>
+                            <td>{{ fav.date_published }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="no-content">
+                    <p>No favourites found for this user.</p>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

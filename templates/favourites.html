@@ -1,0 +1,35 @@
+{% extends "rss_feed.html" %}
+{% block content %}
+<main>
+    <section class="feed-container">
+        <h1>Your Favorites</h1>
+        {% if feed_items %}
+            {% for item in feed_items %}
+                <div class="feed-item favorite" data-id="{{ item.id }}">
+                    <div class="feed-header">
+                        <span class="feed-type {{ item.type }}">{{ item.type|upper }}</span>
+                        <span class="feed-category">{{ item.category }}</span>
+                        <span class="feed-date">{{ item.published }}</span>
+                    </div>
+                    <h2 class="feed-title">
+                        <a href="{{ item.link }}" target="_blank">{{ item.title }}</a>
+                    </h2>                    <div class="feed-actions">
+                        <button class="favorite-btn active" onclick="removeFavorite('{{ item.id }}')" data-fav-id="{{ item.id }}">★ Remove from Favorites</button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-feeds">
+                <h2>No favorites yet</h2>
+                <p>Click the star icon on any feed item to add it to your favorites.</p>
+            </div>
+        {% endif %}
+    </section>
+    
+    <aside class="favorites">
+        <h2>About Favorites</h2>
+        <p>This page shows all your favorite items from both book and research feeds.</p>
+        <p>To add more favorites, browse the <a href="/books">Books Feed</a> or <a href="/research">Research Feed</a> and click the star icon on any item.</p>
+    </aside>
+</main>
+{% endblock %}

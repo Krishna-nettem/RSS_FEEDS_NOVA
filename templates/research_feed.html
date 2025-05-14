@@ -1,0 +1,39 @@
+{% extends "rss_feed.html" %}
+{% block content %}
+<main>
+    <section class="feed-container">
+        <h1>Latest Research Papers</h1>
+        {% if feed_items %}
+            {% for item in feed_items %}
+                {% if item.type == 'arxiv' %}
+                    <div class="feed-item {% if item.is_favorite %}favorite{% endif %}" data-id="{{ loop.index }}">
+                        <div class="feed-header">
+                            <span class="feed-type arxiv">ARXIV</span>
+                            <span class="feed-category">{{ item.category }}</span>
+                            <span class="feed-date">{{ item.published }}</span>
+                        </div>
+                        <h2 class="feed-title">
+                            <a href="{{ item.link }}" target="_blank">{{ item.title }}</a>
+                        </h2>
+                        <div class="feed-summary">{{ item.summary|safe }}</div>
+                        <div class="feed-meta">
+                            <span class="paper-authors">{{ item.authors }}</span>
+                        </div>
+                        <div class="feed-actions">
+                            <button class="favorite-btn {% if item.is_favorite %}active{% endif %}"
+                                    onclick="toggleFavorite(this, '{{ item.title|escape }}', 'arxiv', '{{ item.link|escape }}', '{{ item.published }}')">
+                                {% if item.is_favorite %}★ Favorited{% else %}☆ Add to Favorites{% endif %}
+                            </button>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <div class="no-feeds">
+                <h2>No research papers found</h2>
+                <a href="/select-research" class="btn">Select Research Topics</a>
+            </div>
+        {% endif %}
+    </section>
+</main>
+{% endblock %}
